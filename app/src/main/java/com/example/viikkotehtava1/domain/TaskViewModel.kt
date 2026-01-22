@@ -26,7 +26,8 @@ class TaskViewModel : ViewModel() {
         )
     }
     fun addTask(newtask: Task): List<Task> {
-        return Tasks + newtask
+        Tasks = Tasks + newtask
+        return Tasks
     }
 
     fun sortTasksbyPriority(): List<Task> {
@@ -41,9 +42,18 @@ class TaskViewModel : ViewModel() {
         return Tasks.filter{ it.done }
     }
 
+    fun filterTasksbyNotDone(): List<Task> {
+        return Tasks.filter{ !it.done }
+    }
+
     fun toggleDone(id: Int): List<Task>  {
-        return Tasks.map {
+        Tasks = Tasks.map {
             if (it.id == id) it.copy(done = true) else it
         }
+        return Tasks
+    }
+    fun removeTask(id: Int): List<Task>  {
+        Tasks = Tasks.filterNot { it.id == id}
+        return Tasks
     }
 }
