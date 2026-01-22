@@ -12,8 +12,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.viikkotehtava1.domain.mockTasks
 import com.example.viikkotehtava1.ui.theme.Viikkotehtava1Theme
 import androidx.compose.runtime.remember
 import androidx.compose.material3.OutlinedTextField
@@ -25,12 +23,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Button
-import com.example.viikkotehtava1.domain.Task
-import com.example.viikkotehtava1.domain.addTask
-import com.example.viikkotehtava1.domain.filterTasksbyDone
-import com.example.viikkotehtava1.domain.sortTasksbyDate
-import com.example.viikkotehtava1.domain.sortTasksbyPriority
-import com.example.viikkotehtava1.domain.toggleDone
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.viikkotehtava1.domain.TaskViewModel
+
 
 class MainActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +36,8 @@ class MainActivity: ComponentActivity() {
         setContent {
             Viikkotehtava1Theme {
                 Scaffold(modifier = Modifier.fillMaxSize ()) { innerPadding ->
-                    ParentComponent(modifier = Modifier.padding (innerPadding))
+                    ParentComponent(modifier = Modifier.padding (innerPadding)
+                        )
                 }
             }
         }
@@ -108,13 +104,13 @@ fun priorityTextField(
 }
 
 @Composable
-fun ParentComponent(modifier: Modifier = Modifier) {
+fun ParentComponent(modifier: Modifier = Modifier, viewModel: TaskViewModel = viewModel()) {
+    val tag = "MainActivity"
     var name by remember { mutableStateOf("Task") }
     var description by remember { mutableStateOf("Description") }
     var dueDate by remember { mutableStateOf("2026-01-15") }
     var priority by remember { mutableStateOf("1") }
-    var tasklist by remember { mutableStateOf(mockTasks) }
-    var list by remember { mutableStateOf(mockTasks) }
+    var viewList by remember { mutableStateOf(viewModel.Tasks) }
 
     Column {
         Spacer(modifier = Modifier.height(height = 16.dp))
@@ -134,12 +130,12 @@ fun ParentComponent(modifier: Modifier = Modifier) {
             priority = priority,
             onNameChange = { priority = it }
         )
-        list.forEach { task ->
+
+        viewList.forEach { task ->
             Text("${task.id} - ${task.title} - Priority: ${task.priority} - Date: ${task.dueDate} - ${task.description} - ${task.done}")
             Button(
                 onClick = {
-                tasklist = toggleDone(tasklist, task.id)
-                    list = tasklist
+                    viewList = viewModel.toggleDone(task.id)
                 },
                 content = {
                     Text("Mark task as done")
@@ -149,23 +145,23 @@ fun ParentComponent(modifier: Modifier = Modifier) {
         Row() {
             Button(
                 onClick = {
-                    val newTask = Task(
-                        id = tasklist.size + 1,
+                    val newTask = TaskViewModel.Task(
+                        id = viewModel.Tasks.size + 1,
                         title = name,
                         description = description,
                         priority = priority.toInt(),
                         dueDate = dueDate,
                         done = false
                     )
-                    tasklist = addTask(tasklist, newTask)
-                    list = tasklist
+                    Log.d(tag, "add task")
+                    viewList = viewModel.addTask(newTask)
                 },
                 content = {
-                    Text("Lisää uusi task")
+                    Text("Add a task")
                 }
             )
             Button(
-                onClick = { list = filterTasksbyDone(tasklist) },
+                onClick = { viewList = viewModel.filterTasksbyDone() },
                 content = {
                     Text("Filter by done")
                 }
@@ -174,14 +170,14 @@ fun ParentComponent(modifier: Modifier = Modifier) {
         }
         Row() {
             Button(
-                onClick = { list = sortTasksbyPriority(tasklist) },
+                onClick = { viewList = viewModel.sortTasksbyPriority() },
                 content = {
                     Text("Sort tasks by priority")
                 }
             )
             Button(
                 onClick = {
-                    list = sortTasksbyDate(tasklist) },
+                    viewList = viewModel.sortTasksbyDate() },
                 content = {
                     Text("Sort tasks by date")
                 }
@@ -189,5 +185,3 @@ fun ParentComponent(modifier: Modifier = Modifier) {
         }
     }
 }
-
-//Kotlin
