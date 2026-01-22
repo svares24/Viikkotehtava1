@@ -157,7 +157,7 @@ fun ParentComponent(modifier: Modifier = Modifier, viewModel: TaskViewModel = vi
                     viewList = viewModel.addTask(newTask)
                 },
                 content = {
-                    Text("Add a task")
+                    Text("Add very a task")
                 }
             )
             Button(
