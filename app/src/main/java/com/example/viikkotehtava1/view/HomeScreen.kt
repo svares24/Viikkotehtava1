@@ -1,7 +1,5 @@
 package com.example.viikkotehtava1.view
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,80 +7,70 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.viikkotehtava1.viewmodel.TaskViewModel
-import com.example.viikkotehtava1.model.Task
-import java.time.LocalDate
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 
-@RequiresApi(Build.VERSION_CODES.O)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: TaskViewModel = viewModel()) {
+fun HomeScreen(
+    viewModel: TaskViewModel,
+    onTaskClick: (Int) -> Unit = { },
+    onAddClick: () -> Unit = { },
+    onNavigateCalendar: () -> Unit = {}
+
+) {
     val tasks by viewModel.tasks.collectAsState()
     val selectedTask by viewModel.selectedTask.collectAsState()
-    var title by remember { mutableStateOf("") }
-
-    @Composable
-    fun TaskTitleField(
-        title: String,
-        onTitleChange: (String) -> Unit
-    ) {
-        OutlinedTextField(
-            value = title,
-            onValueChange = onTitleChange,
-            label = { Text("Task name") }
-
-        )
-    }
-
-
+    val addTaskFlag by viewModel.addTaskDialogVisible.collectAsState()
 
     Column(modifier = Modifier.padding(16.dp)) {
-        Text("Task List", style = MaterialTheme.typography.headlineMedium)
-        TaskTitleField(
-            title = title,
-            onTitleChange = { title = it }
+
+        TopAppBar(
+            title = { Text("Task List") },
+            actions = {
+                IconButton(onClick = onNavigateCalendar) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = "Go to calendar"
+                    )
+                }
+            }
         )
-        Row()
-        {
 
+        Row {
             Button(
-                onClick = {
+                onClick = onAddClick,
+                modifier = Modifier.padding(8.dp),
+            ) {
+                Text("Add Task")
+            }
 
-                    viewModel.addTask(
-                        Task(
-                            id = tasks.size + 1,
-                            title = title,
-                            priority = 1,
-                            dueDate = LocalDate.now().toString(),
-                            description = "",
-                            done = false
-                        )
-
-                    );
-                    title = " ";
-                },
-                content = {
-                    Text("Add new task");
-                },
-
-            )
         }
-        LazyColumn() {
+
+        LazyColumn {
             items(tasks) { task ->
-                Card(modifier = Modifier
-                    .padding(8.dp)
-                    .clickable { viewModel.selectTask(task) }) {
+                Card(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clickable { onTaskClick(task.id) }
+                ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -90,7 +78,10 @@ fun HomeScreen(viewModel: TaskViewModel = viewModel()) {
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text(task.title, style = MaterialTheme.typography.headlineSmall)
+                            Text(
+                                task.title,
+                                style = MaterialTheme.typography.headlineSmall
+                            )
                             Text(task.description)
                         }
                         Checkbox(
@@ -105,6 +96,18 @@ fun HomeScreen(viewModel: TaskViewModel = viewModel()) {
 
 
     if (selectedTask != null) {
-        DetailDialog(task = selectedTask!!, viewModel, onClose = { viewModel.closeDialog() }, onUpdate = { viewModel.updateTask(it) })
+        DetailDialog(
+            task = selectedTask!!,
+            onClose = { viewModel.closeDialog() },
+            onUpdate = { viewModel.updateTask(it) },
+        )
+    }
+
+
+    if (addTaskFlag) {
+        AddDialog(
+            onClose = { viewModel.addTaskDialogVisible.value = false },
+            onUpdate = { viewModel.addTask(it) }
+        )
     }
 }

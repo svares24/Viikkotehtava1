@@ -14,19 +14,20 @@ class TaskViewModel : ViewModel() {
     private val _selectedTask = MutableStateFlow<Task?>(null)
     val selectedTask: StateFlow<Task?> = _selectedTask
 
+    val addTaskDialogVisible = MutableStateFlow<Boolean>(false)
+
     init {
         _tasks.value = mockTasks
-        /*
-        _tasks.value = listOf(
-            Task(1, "Compose Basics", "Learn Column & Row", 1, "2026-01-30", false),
-            Task(2, "MVVM Practice", "Implement ViewModel", 2, "2026-02-02", false)
-        )
+    }
 
-         */
+    fun openTask(id: Int) {
+        val task = _tasks.value.find { it.id == id }
+        _selectedTask.value = task
     }
 
     fun addTask(task: Task) {
         _tasks.value += task
+        addTaskDialogVisible.value = false
     }
 
     fun toggleDone(id: Int) {
@@ -47,11 +48,10 @@ class TaskViewModel : ViewModel() {
         _tasks.value = _tasks.value.map {
             if (it.id == updated.id) updated else it
         }
-        _selectedTask.value = null // sulje dialog päivityksen jälkeen
+        _selectedTask.value = null
     }
 
     fun closeDialog() {
         _selectedTask.value = null
     }
 }
-
