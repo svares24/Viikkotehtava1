@@ -3,59 +3,45 @@ package com.example.viikkotehtava1
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.todo.view.CalendarScreen
-import com.example.viikkotehtava1.navigation.ROUTE_CALENDAR
-import com.example.viikkotehtava1.navigation.ROUTE_HOME
+import androidx.activity.viewModels
+import androidx.compose.material3.MaterialTheme
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.example.viikkotehtava1.data.local.AppDatabase
+import com.example.viikkotehtava1.data.repository.TaskRepository
+import com.example.viikkotehtava1.view.TaskListScreen
 import com.example.viikkotehtava1.viewmodel.TaskViewModel
-import com.example.viikkotehtava1.view.HomeScreen
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    // Luo tietokanta lazy-patternilla (vasta kun sitä tarvitaan)
+    private val database by lazy {
+        AppDatabase.getDatabase(applicationContext)
+    }
 
-        setContent {
-            val navController = rememberNavController()
-            val viewModel: TaskViewModel = viewModel()
+    // Luo Repository, joka käyttää DAO:a tietokantaoperaatioihin
+    private val repository by lazy {
+        TaskRepository(database.taskDao())
+    }
 
-            NavHost(
-                navController = navController,
-                startDestination = ROUTE_HOME
-            ) {
-
-                composable(ROUTE_HOME) {
-                    HomeScreen(
-                        viewModel = viewModel,
-                        onTaskClick = { id ->
-                            viewModel.openTask(id)
-                        },
-                        onAddClick = {
-                            viewModel.addTaskDialogVisible.value = true
-                        },
-                        onNavigateCalendar = {
-                            navController.navigate(ROUTE_CALENDAR)
-                        }
-                    )
-                }
-
-
-                composable(ROUTE_CALENDAR) {
-                    CalendarScreen(
-                        viewModel = viewModel,
-                        onTaskClick = { id ->
-                            viewModel.openTask(id)
-                        },
-                        onNavigateHome = {
-                            navController.navigate(ROUTE_HOME)
-                        }
-                    )
-                }
+    // Luo ViewModel ViewModelProvider.Factory:n avulla
+    // Factory tarvitaan koska ViewModel ottaa parametrin (repository)
+    private val viewModel: TaskViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return TaskViewModel(repository) as T
             }
         }
+    }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // setContent käynnistää Compose-UI:n
+        setContent {
+            MaterialTheme {
+                // Annetaan ViewModel näkymälle
+                TaskListScreen(viewModel = viewModel)
+            }
+        }
     }
 }
-

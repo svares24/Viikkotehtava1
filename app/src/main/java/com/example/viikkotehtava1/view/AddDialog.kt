@@ -1,50 +1,55 @@
 package com.example.viikkotehtava1.view
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.viikkotehtava1.model.Task
-import com.example.viikkotehtava1.viewmodel.TaskViewModel
-
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 
 @Composable
-fun AddDialog(viewModel: TaskViewModel = viewModel(), onClose: () -> Unit, onUpdate: (task: Task) -> Unit) {
-    var title by remember { mutableStateOf("title") }
-    var description by remember { mutableStateOf("description") }
-    var dueDate by remember { mutableStateOf("2026-01-01") }
-    var task by remember {
-        mutableStateOf(Task(id = 0, title = "", description = "", priority = 0, dueDate = "", done = false))
-    }
+fun AddTaskDialog(
+    onDismiss: () -> Unit,                          // Sulkee dialogin
+    onAdd: (String, String) -> Unit                 // Palauttaa otsikon ja kuvauksen
+) {
+    // Dialogin sisäiset tilat: käyttäjän syöttämät tekstit
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
 
     AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text("Add Task") },
+        onDismissRequest = onDismiss,               // Sulkee dialogin taustaa koskettamalla
+        title = { Text("Uusi tehtävä") },
         text = {
-            Column {
-                TextField(value = title, onValueChange = { title = it }, label = { Text("Title") })
-                TextField(value = description, onValueChange = { description = it }, label = { Text("Description") })
-                TextField(value = dueDate, onValueChange = { dueDate = it }, label = { Text("Due date") })
-
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Otsikkokenttä
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Otsikko") },
+                    singleLine = true,              // Ei rivinvaihtoa
+                    modifier = Modifier.fillMaxWidth()
+                )
+                // Kuvauskenttä (monirivinen)
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Kuvaus (valinnainen)") },
+                    maxLines = 3,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
         confirmButton = {
-            Button(onClick = {
-                onUpdate(Task(id = viewModel.tasks.value.size + 1, title = title, description = description, priority = 0, dueDate = dueDate, done = false))
-            }) {
-                Text("Save")
+            TextButton(
+                onClick = { onAdd(title, description) },
+                // Nappi on pois käytöstä jos otsikko on tyhjä
+                enabled = title.isNotBlank()
+            ) {
+                Text("Lisää")
             }
         },
         dismissButton = {
-            Button(onClick = onClose) {
-                Text("Cancel")
+            TextButton(onClick = onDismiss) {
+                Text("Peruuta")
             }
         }
     )

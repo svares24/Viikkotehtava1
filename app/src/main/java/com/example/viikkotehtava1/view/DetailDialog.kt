@@ -1,52 +1,82 @@
 package com.example.viikkotehtava1.view
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.example.viikkotehtava1.model.Task
-
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
+import com.example.viikkotehtava1.data.local.entity.Task
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
-fun DetailDialog(task: Task, onClose: () -> Unit, onUpdate: (Task) -> Unit) {
-    var title by remember { mutableStateOf(task.title) }
-    var description by remember { mutableStateOf(task.description) }
-    var dueDate by remember { mutableStateOf(task.dueDate) }
+fun TaskItem(
+    task: Task,
+    onToggle: () -> Unit,    // Kutsutaan kun checkbox muuttuu
+    onDelete: () -> Unit,     // Kutsutaan kun poistopainiketta painetaan
+) {
+    var showDialog by remember { mutableStateOf(false) }
 
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text("Edit Task") },
-        text = {
-            Column {
-                TextField(value = title, onValueChange = { title = it }, label = { Text("Title") })
-                TextField(value = description, onValueChange = { description = it }, label = { Text("Description") })
-                TextField(value = dueDate, onValueChange = { dueDate = it }, label = { Text("Due date") })
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Checkbox: merkitse tehtävä valmiiksi / keskeneräiseksi
+            Checkbox(
+                checked = task.isCompleted,
+                onCheckedChange = { onToggle() }
+            )
 
+            // Tehtävän tiedot (otsikko + kuvaus + päivämäärä)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { showDialog = true }
+            ) {
+                Text(
+                    text = task.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    // Yliviivaus jos tehtävä on valmis
+                    textDecoration = if (task.isCompleted) {
+                        TextDecoration.LineThrough
+                    } else null
+                )
+                // Näytä kuvaus vain jos se ei ole tyhjä
+                if (task.description.isNotBlank()) {
+                    Text(
+                        text = task.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+                // Muotoile aikaleima luettavaan muotoon
+                Text(
+                    text = "Luotu: ${formatDate(task.createdAt)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
             }
-        },
-        confirmButton = {
-            Button(onClick = {
-                onUpdate(task.copy(title = title, description = description, dueDate = dueDate))
-            }) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            Button(onClick = onClose) {
-                Text("Cancel")
-            }
-            Button(onClick ={
-            }) {
-                Text("Delete")
+
+            // Poistopainike (roskakori-ikoni)
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, "Poista")
             }
         }
+    }
+}
 
-    )
+// Apufunktio: muuntaa millisekunnit luettavaksi päivämääräksi
+// esim. 1708123456789 → "17.02.2024 10:30"
+fun formatDate(timestamp: Long): String {
+    val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+    return sdf.format(Date(timestamp))
 }

@@ -1,4 +1,4 @@
 package com.example.viikkotehtava1.navigation
 
-const val ROUTE_HOME = "home"
-const val ROUTE_CALENDAR = "calendar"
+const val TASK_LIST_SCREEN = "task_list"
+const val CALENDAR_SCREEN = "calendar"
